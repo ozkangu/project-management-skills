@@ -40,11 +40,12 @@ The system supports:
 ```text
 .
 ├── SKILL.md                         # Main orchestrator skill
-├── install.sh                       # Basic installer/validator
+├── install.sh                       # Installer with Claude Code integration
 ├── config/
 │   └── pipeline-config.json         # Provider, execution, and pipeline defaults
 ├── references/
 │   ├── estimation-benchmarks.json   # Provider-aware estimation benchmarks
+│   ├── calibration-history.jsonl    # Cross-project calibration history
 │   ├── interview-guide.md           # Discovery interview prompts
 │   ├── pbi-template.md              # Product backlog item template
 │   ├── test-case-template.md        # Test case template
@@ -98,6 +99,8 @@ flowchart TD
     D4 --> D5
     D5 --> R
     R --> D3
+    R --> CH[references/calibration-history.jsonl]
+    CH --> D3
 ```
 
 ## Execution Modes
@@ -142,22 +145,30 @@ This allows the workflow to remain usable even when the underlying model provide
 - Estimating AI-assisted delivery cost and timeline before implementation starts
 - Running a structured agent execution loop with machine-readable handoffs
 - Capturing delivery telemetry and improving future estimates
+- Building cross-project calibration data that makes each subsequent project more accurate
 
 ## Installation
 
-### Local Validation
+### Claude Code
 
-Run:
+Run the installer:
 
 ```sh
 ./install.sh
 ```
 
-This validates that the skill package contains the required files.
+This will:
+1. Validate that all required skill files are present
+2. Detect your Claude Code environment (`~/.claude/`)
+3. Symlink the skill into `~/.claude/commands/` as a custom slash command
+4. Optionally configure your default provider (openai or anthropic)
+5. Run post-install verification (symlink validity, JSON validation)
+
+After installation, invoke the skill in Claude Code with `/project-management-skills`.
 
 ### OpenCode
 
-One simple installation approach is to symlink the repository into the OpenCode skills directory:
+Symlink the repository into the OpenCode skills directory:
 
 ```sh
 ln -s /path/to/project-management-skills \
@@ -192,8 +203,8 @@ The main orchestrator lives in [SKILL.md](/Users/gurkanozkan/emdash-projects/pro
 | Architect | Design technical structure and flows | `state/architecture.json` |
 | Estimate | Project time, cost, tokens, and model fit | `state/estimate.json` |
 | Plan | Generate documentation and release planning | `docs/*`, `state/release-plan.json` |
-| Execute | Run work items through delivery stages | `state/execution-log.json` |
-| Retro | Compare estimates vs actuals and calibrate | `retro/retro-report.json`, `retro/estimation-calibration.json` |
+| Execute | Run work items through delivery stages with budget burn tracking | `state/execution-log.json` |
+| Retro | Compare estimates vs actuals, calibrate per work type and provider | `retro/retro-report.json`, `retro/estimation-calibration.json` |
 
 ## Delivery Loop
 
@@ -202,7 +213,9 @@ flowchart LR
     T[Think] --> P[Plan] --> B[Build] --> R[Review] --> Q[Test] --> S[Ship]
 ```
 
-This loop is used in the execution phase and is compatible with both human-managed and agent-led workflows.
+Each stage has defined responsibilities: THINK identifies the approach, PLAN breaks it into sub-steps, BUILD writes the code, REVIEW checks against acceptance criteria, TEST captures pass/fail counts, and SHIP records telemetry and unblocks downstream items.
+
+The execution phase tracks budget burn (tokens, cost, time) after every work item. If any dimension exceeds 80% with work remaining, a warning is raised.
 
 ## Why This Exists
 
@@ -213,7 +226,9 @@ Most agent workflows are strong at isolated tasks but weak at project-level cont
 - traceability across requirements, PBIs, tests, and work items
 - explicit execution modes
 - provider-aware estimation
-- retrospective learning instead of one-off delivery
+- budget burn tracking with early warning thresholds
+- retrospective learning with per-work-type and per-provider calibration
+- cross-project calibration history that improves estimates over time
 
 ## Current Status
 

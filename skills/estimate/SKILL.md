@@ -18,6 +18,8 @@ Also read `references/estimation-benchmarks.json` from the project-builder skill
 
 If `retro/estimation-calibration.json` exists from a previous project, read it and apply the calibration factors.
 
+Also read `references/calibration-history.jsonl` from the skill directory if it exists. This file contains cross-project calibration data appended by the Retro phase. Compute running averages across all projects for `work_type_multipliers` and `provider_multipliers`. Use these running averages as a baseline. If a project-specific `estimation-calibration.json` is also available, its values override the cross-project averages for any overlapping keys.
+
 ## Provider and Model Selection
 
 Do not hard-code a single vendor. Resolve models in this order:

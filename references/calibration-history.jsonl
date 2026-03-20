@@ -1,0 +1,5 @@
+# Cross-Project Calibration History
+# Format: one JSON object per line, appended by the Retro phase after each project.
+# Fields: project_id, date, telemetry_quality, work_type_multipliers, provider_multipliers, sample_sizes
+# The Estimate phase reads this file and computes running averages for baseline calibration.
+# Only entries with telemetry_quality "exact" or "estimated" should be appended.
