@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "description": "Default configuration for the Project Builder pipeline. Users can override any setting.",
+  "pipeline": {
+    "phases": ["discover", "scope", "architect", "estimate", "plan", "execute", "retro"],
+    "auto_advance": false,
+    "require_confirmation_between_phases": true
+  },
+  "discovery": {
+    "max_interview_rounds": 5,
+    "premise_challenge_enabled": true,
+    "repo_analysis": {
+      "max_files_to_scan": 500,
+      "include_dependency_analysis": true,
+      "include_test_coverage_estimate": true
+    },
+    "web_exploration": {
+      "max_pages_to_visit": 10,
+      "capture_screenshots": true
+    }
+  },
+  "scope": {
+    "default_scope_mode": "selective",
+    "forcing_questions_count": 5,
+    "ambiguity_detection_enabled": true,
+    "require_scope_confirmation": true
+  },
+  "architecture": {
+    "generate_mermaid_diagrams": true,
+    "diagram_types": ["component", "data-model", "sequence"],
+    "max_sequence_diagrams": 5,
+    "failure_mode_analysis_enabled": true,
+    "test_matrix_enabled": true
+  },
+  "estimation": {
+    "default_buffer_percent": 20,
+    "default_risk_level": "medium",
+    "include_cost_breakdown": true,
+    "include_timeline_scenarios": true,
+    "calibration_file": "retro/estimation-calibration.json",
+    "confidence_thresholds": {
+      "high": 0.15,
+      "medium": 0.30,
+      "low": 0.50,
+      "very_low": 1.00
+    },
+    "model_defaults": {
+      "trivial": "haiku",
+      "simple": "sonnet",
+      "medium": "sonnet",
+      "complex": "opus",
+      "research": "opus"
+    }
+  },
+  "plan": {
+    "generate_documents": [
+      "project-charter",
+      "architecture-doc",
+      "wbs",
+      "pbis",
+      "test-cases",
+      "risk-register",
+      "release-plan",
+      "cost-report"
+    ],
+    "traceability_check_enabled": true,
+    "require_100pct_p1_coverage": true,
+    "pbi_max_acs_before_split_warning": 8,
+    "output_format": "markdown"
+  },
+  "execution": {
+    "stages": ["think", "plan", "build", "review", "test", "ship"],
+    "approval_gates": {
+      "sprint_start": "required",
+      "build_to_review": "auto",
+      "review_to_test": "auto",
+      "test_to_ship": "optional",
+      "sprint_complete": "required"
+    },
+    "fix_first_review": true,
+    "parallel_execution_enabled": true,
+    "max_parallel_work_items": 3,
+    "progress_tracking_enabled": true
+  },
+  "retro": {
+    "compare_dimensions": ["tokens", "cost", "time", "iterations", "model_accuracy"],
+    "generate_calibration_data": true,
+    "deviation_threshold_pct": 20,
+    "lessons_learned_categories": ["went_well", "didnt_go_well", "do_differently", "surprises"]
+  },
+  "output": {
+    "state_directory": "state",
+    "docs_directory": "docs",
+    "diagrams_directory": "diagrams",
+    "retro_directory": "retro",
+    "file_format": "markdown",
+    "json_indent": 2
+  }
+}
