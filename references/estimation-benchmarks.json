@@ -1,26 +1,24 @@
 {
-  "version": "1.0",
-  "description": "Reference benchmarks for AI-native project estimation. Based on observed token consumption and timing for common work item types. Use as starting points — calibrate with actual project data from Phase 6 retros.",
-  "model_pricing": {
-    "haiku": {
-      "input_per_million": 0.25,
-      "output_per_million": 1.25,
-      "cache_write_per_million": 0.30,
-      "cache_read_per_million": 0.03,
+  "version": "2.0",
+  "description": "Reference benchmarks for AI-native project estimation. Provider-agnostic by default; attach provider/model pricing at runtime.",
+  "provider_pricing_examples": {
+    "anthropic": {
+      "haiku": {"input_per_million": 0.25, "output_per_million": 1.25, "cache_write_per_million": 0.30, "cache_read_per_million": 0.03},
+      "sonnet": {"input_per_million": 3.00, "output_per_million": 15.00, "cache_write_per_million": 3.75, "cache_read_per_million": 0.30},
+      "opus": {"input_per_million": 15.00, "output_per_million": 75.00, "cache_write_per_million": 18.75, "cache_read_per_million": 1.50}
+    },
+    "openai": {
+      "note": "Fill with current pricing at runtime or by local override. Do not hard-code stale values into planning outputs."
+    }
+  },
+  "model_tiers": {
+    "fast": {
       "typical_use": "Boilerplate, simple CRUD, config files, formatting, simple tests"
     },
-    "sonnet": {
-      "input_per_million": 3.00,
-      "output_per_million": 15.00,
-      "cache_write_per_million": 3.75,
-      "cache_read_per_million": 0.30,
+    "balanced": {
       "typical_use": "Standard features, API endpoints, moderate logic, most tests"
     },
-    "opus": {
-      "input_per_million": 15.00,
-      "output_per_million": 75.00,
-      "cache_write_per_million": 18.75,
-      "cache_read_per_million": 1.50,
+    "deep": {
       "typical_use": "Complex algorithms, architecture decisions, subtle bugs, security review"
     }
   },
@@ -31,7 +29,7 @@
       "typical_tool_calls": {"min": 10, "median": 20, "max": 40},
       "typical_iterations": 1,
       "typical_minutes": {"min": 2, "median": 4, "max": 8},
-      "recommended_model": "sonnet",
+      "recommended_tier": "balanced",
       "notes": "Usually straightforward but depends on framework complexity"
     },
     "feature": {
@@ -40,8 +38,8 @@
       "typical_tool_calls": {"min": 20, "median": 40, "max": 80},
       "typical_iterations": {"min": 2, "median": 3, "max": 6},
       "typical_minutes": {"min": 5, "median": 12, "max": 30},
-      "recommended_model": "sonnet",
-      "notes": "Highly variable based on complexity. Complex features may need Opus."
+      "recommended_tier": "balanced",
+      "notes": "Highly variable based on complexity. Complex features may need a deep-tier model."
     },
     "api_endpoint": {
       "description": "Single API endpoint with validation, error handling, tests",
@@ -49,7 +47,7 @@
       "typical_tool_calls": {"min": 15, "median": 30, "max": 60},
       "typical_iterations": {"min": 1, "median": 2, "max": 4},
       "typical_minutes": {"min": 3, "median": 8, "max": 18},
-      "recommended_model": "sonnet",
+      "recommended_tier": "balanced",
       "notes": "Includes route handler, validation, error responses, and basic test"
     },
     "data_model": {
@@ -58,7 +56,7 @@
       "typical_tool_calls": {"min": 8, "median": 15, "max": 30},
       "typical_iterations": 1,
       "typical_minutes": {"min": 2, "median": 5, "max": 12},
-      "recommended_model": "sonnet",
+      "recommended_tier": "balanced",
       "notes": "Usually well-defined. Complex relationships may need more iterations."
     },
     "migration": {
@@ -67,8 +65,8 @@
       "typical_tool_calls": {"min": 15, "median": 30, "max": 60},
       "typical_iterations": {"min": 2, "median": 3, "max": 5},
       "typical_minutes": {"min": 5, "median": 10, "max": 25},
-      "recommended_model": "sonnet",
-      "notes": "Risk-sensitive — needs thorough testing. Consider Opus for complex migrations."
+      "recommended_tier": "balanced",
+      "notes": "Risk-sensitive work. Use deep-tier models for complex migrations."
     },
     "test": {
       "description": "Test suite for existing code",
@@ -76,8 +74,8 @@
       "typical_tool_calls": {"min": 15, "median": 30, "max": 70},
       "typical_iterations": {"min": 2, "median": 3, "max": 6},
       "typical_minutes": {"min": 4, "median": 8, "max": 20},
-      "recommended_model": "sonnet",
-      "notes": "Often underestimated. Test failures trigger fix-test cycles. Budget extra iterations."
+      "recommended_tier": "balanced",
+      "notes": "Often underestimated. Test failures trigger fix-test cycles."
     },
     "integration": {
       "description": "Connecting two systems, external API integration",
@@ -85,8 +83,8 @@
       "typical_tool_calls": {"min": 25, "median": 50, "max": 100},
       "typical_iterations": {"min": 3, "median": 4, "max": 8},
       "typical_minutes": {"min": 8, "median": 15, "max": 35},
-      "recommended_model": "sonnet",
-      "notes": "Most underestimated category. External APIs have surprising edge cases. Budget generously."
+      "recommended_tier": "balanced",
+      "notes": "Most underestimated category. Budget generously."
     },
     "config": {
       "description": "Configuration files, environment setup, CI/CD",
@@ -94,7 +92,7 @@
       "typical_tool_calls": {"min": 5, "median": 12, "max": 25},
       "typical_iterations": 1,
       "typical_minutes": {"min": 1, "median": 3, "max": 6},
-      "recommended_model": "haiku",
+      "recommended_tier": "fast",
       "notes": "Usually simple but CI/CD configs can be tricky."
     },
     "docs": {
@@ -103,8 +101,8 @@
       "typical_tool_calls": {"min": 5, "median": 10, "max": 25},
       "typical_iterations": 1,
       "typical_minutes": {"min": 2, "median": 5, "max": 12},
-      "recommended_model": "sonnet",
-      "notes": "Sonnet for quality. Haiku acceptable for simple READMEs."
+      "recommended_tier": "balanced",
+      "notes": "Use fast tier for simple docs, balanced for higher-quality outputs."
     },
     "research": {
       "description": "Investigation, spike, proof of concept",
@@ -112,8 +110,8 @@
       "typical_tool_calls": {"min": 20, "median": 50, "max": 150},
       "typical_iterations": {"min": 3, "median": 5, "max": 10},
       "typical_minutes": {"min": 10, "median": 20, "max": 50},
-      "recommended_model": "opus",
-      "notes": "Highest variance. Opus for quality of reasoning. May produce no code — just findings."
+      "recommended_tier": "deep",
+      "notes": "Highest variance. May produce findings rather than code."
     },
     "deployment": {
       "description": "Deployment scripts, container setup, cloud config",
@@ -121,8 +119,8 @@
       "typical_tool_calls": {"min": 15, "median": 30, "max": 60},
       "typical_iterations": {"min": 2, "median": 3, "max": 5},
       "typical_minutes": {"min": 4, "median": 10, "max": 22},
-      "recommended_model": "sonnet",
-      "notes": "Platform-dependent complexity. Docker is simpler than k8s."
+      "recommended_tier": "balanced",
+      "notes": "Platform-dependent complexity."
     }
   },
   "complexity_multipliers": {

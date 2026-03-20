@@ -1,6 +1,6 @@
 ---
 name: project-builder
-description: "AI-native project management that transforms any input (idea, repo URL, web app, document, free text) into professional project documentation and execution plans. Runs a 7-phase pipeline: discover → scope → architect → estimate → plan → execute → retro. Use this skill whenever the user mentions 'project', 'build plan', 'project plan', 'estimate this project', 'architect this', 'sprint planning', 'project discovery', 'scope this', 'break this down', 'create PBIs', 'project retro', or wants to go from idea to execution on ANY kind of software project — web apps, APIs, mobile apps, data pipelines, ML systems, infrastructure, or anything else. Also triggers on: 'how long will this take', 'how much will this cost', 'plan the work', 'what should we build first', or any uploaded project document/spec. Even if the user doesn't say 'project' explicitly, trigger when they describe something that needs structured planning, estimation, or multi-phase execution."
+description: "AI-native project management that transforms any input (idea, repo URL, web app, document, free text) into professional project documentation and execution plans. Runs a 7-phase pipeline: discover → scope → architect → estimate → plan → execute → retro. Supports multiple AI providers, selectable execution modes (manual, hybrid, auto), and can run phase-by-phase or end-to-end. Use this skill whenever the user mentions 'project', 'build plan', 'project plan', 'estimate this project', 'architect this', 'sprint planning', 'project discovery', 'scope this', 'break this down', 'create PBIs', 'project retro', or wants to go from idea to execution on ANY kind of software project — web apps, APIs, mobile apps, data pipelines, ML systems, infrastructure, or anything else. Also triggers on: 'how long will this take', 'how much will this cost', 'plan the work', 'what should we build first', or any uploaded project document/spec. Even if the user doesn't say 'project' explicitly, trigger when they describe something that needs structured planning, estimation, or multi-phase execution."
 ---
 
 # Project Builder — AI-Native Project Management
@@ -16,13 +16,25 @@ Input: Idea / Repo URL / Web App / Document / Free Text
   → Phase 0: /project-discover  — Research & understand the project reality
   → Phase 1: /project-scope     — Define scope, requirements, and boundaries
   → Phase 2: /project-architect  — Design technical architecture
-  → Phase 3: /project-estimate   — AI-native cost & time estimation
+  → Phase 3: /project-estimate   — Provider-aware cost & time estimation
   → Phase 4: /project-plan       — Generate all project documents
   → Phase 5: /project-execute    — Sprint orchestration & delivery
   → Phase 6: /project-retro      — Retrospective & estimation calibration
 ```
 
 Each phase builds on the previous one. You can run the full pipeline or any individual phase.
+
+## Execution Styles
+
+Project Builder supports three execution styles:
+
+| Style | What it means |
+|---|---|
+| `manual` | Human approval at every major gate. Best for collaborative planning and controlled delivery. |
+| `hybrid` | Default. Human approval at sprint boundaries, auto-progress inside a sprint unless blocked. |
+| `auto` | End-to-end execution with intervention only for blockers, missing context, or explicit approval requirements. |
+
+Read `config/pipeline-config.json` before starting and honor `execution.mode` plus provider settings.
 
 ## How to Route
 
@@ -63,13 +75,14 @@ All project data lives in a workspace directory. Create it on first run:
 ```
 {output-dir}/{project-slug}/
 ├── state/
-│   ├── project-meta.json      # Created in Phase 0, updated throughout
-│   ├── discovery-report.json   # Phase 0 output
-│   ├── project-scope.json      # Phase 1 output
-│   ├── architecture.json       # Phase 2 output
-│   ├── estimate.json           # Phase 3 output
-│   └── execution-log.json      # Phase 5 output
-├── docs/                       # Phase 4 outputs
+│   ├── project-meta.json        # Created in Phase 0, updated throughout
+│   ├── discovery-report.json    # Phase 0 output
+│   ├── project-scope.json       # Phase 1 output
+│   ├── architecture.json        # Phase 2 output
+│   ├── estimate.json            # Phase 3 output
+│   ├── release-plan.json        # Phase 4 machine-readable sprint plan
+│   └── execution-log.json       # Phase 5 output with telemetry
+├── docs/                        # Phase 4 outputs
 │   ├── project-charter.md
 │   ├── architecture-doc.md
 │   ├── wbs.md
@@ -77,11 +90,11 @@ All project data lives in a workspace directory. Create it on first run:
 │   ├── pbis/
 │   ├── test-cases/
 │   └── release-plan.md
-├── diagrams/                   # Phase 2 outputs
+├── diagrams/                    # Phase 2 outputs
 │   ├── component.mermaid
-│   ├── sequence.mermaid
-│   └── data-flow.mermaid
-└── retro/                      # Phase 6 outputs
+│   ├── data-model.mermaid
+│   └── sequence-{flow-name}.mermaid
+└── retro/                       # Phase 6 outputs
     ├── retro-report.json
     └── estimation-calibration.json
 ```
@@ -90,7 +103,7 @@ All project data lives in a workspace directory. Create it on first run:
 
 State flows between phases via JSON files in `state/`. Each phase reads its predecessors' outputs and writes its own.
 
-**project-meta.json** is the central manifest — created in Phase 0, enriched by each subsequent phase:
+`project-meta.json` is the central manifest — created in Phase 0, enriched by each subsequent phase:
 
 ```json
 {
@@ -103,6 +116,15 @@ State flows between phases via JSON files in `state/`. Each phase reads its pred
   "current_phase": "architect",
   "project_type": "web_app",
   "tech_stack": ["React", "Node.js", "PostgreSQL"],
+  "execution_mode": "hybrid",
+  "provider_context": {
+    "default_provider": "openai",
+    "model_aliases": {
+      "fast": "gpt-5.4-mini",
+      "balanced": "gpt-5.4",
+      "deep": "gpt-5.4"
+    }
+  },
   "team_context": {
     "size": "solo_dev",
     "experience_level": "senior"
@@ -121,25 +143,15 @@ Every phase ends with one of these statuses:
 | `BLOCKED` | Cannot complete without resolution | Show blockers, ask user |
 | `NEEDS_CONTEXT` | Missing information to proceed | Ask specific questions |
 
-Present the status clearly and wait for user confirmation before advancing to the next phase.
-
-## Quick Start Examples
-
-**"I want to build a task management app"**
-→ Start Phase 0 (Discover) → guided interview → tech stack detection → full pipeline
-
-**"Here's my repo: github.com/user/project"**
-→ Start Phase 0 (Discover) → clone & analyze → auto-detect everything → suggest next phase
-
-**"I have requirements, just estimate it"**
-→ Start Phase 1 (Scope) briefly to validate → Phase 3 (Estimate)
-
-**"We finished the sprint, let's retro"**
-→ Start Phase 6 (Retro) → compare actuals vs estimates → calibrate
+Respect `execution.mode` when deciding whether to wait for confirmation before advancing.
 
 ## Configuration
 
-Default config lives in `config/pipeline-config.json` in this skill's directory. Read it to understand defaults for approval gates, estimation parameters, and output formats. Users can override any setting.
+Default config lives in `config/pipeline-config.json` in this skill's directory. Read it to understand defaults for provider selection, approval gates, estimation parameters, execution modes, telemetry capture, and output formats. Users can override any setting.
+
+## Installation
+
+Run `./install.sh` from the skill root to validate the packaged files and prepare local setup metadata.
 
 ## Reference Files
 
@@ -148,7 +160,7 @@ This skill bundles several reference files — read them as needed, not upfront:
 | File | When to read |
 |---|---|
 | `references/interview-guide.md` | Phase 0 — discovery questions by project type |
-| `references/estimation-benchmarks.json` | Phase 3 — token/cost reference data |
+| `references/estimation-benchmarks.json` | Phase 3 — provider-aware estimation benchmark data |
 | `references/doc-templates/project-charter.md` | Phase 4 — charter generation |
 | `references/doc-templates/architecture-doc.md` | Phase 4 — architecture doc generation |
 | `references/doc-templates/wbs.md` | Phase 4 — work breakdown structure |

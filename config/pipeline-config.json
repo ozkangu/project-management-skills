@@ -1,10 +1,48 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "description": "Default configuration for the Project Builder pipeline. Users can override any setting.",
   "pipeline": {
     "phases": ["discover", "scope", "architect", "estimate", "plan", "execute", "retro"],
     "auto_advance": false,
     "require_confirmation_between_phases": true
+  },
+  "providers": {
+    "default_provider": "openai",
+    "aliases": {
+      "fast": "gpt-5.4-mini",
+      "balanced": "gpt-5.4",
+      "deep": "gpt-5.4"
+    },
+    "catalog": {
+      "openai": {
+        "models": {
+          "gpt-5.4-mini": {
+            "tier": "fast",
+            "best_for": ["boilerplate", "simple_crud", "config", "simple_tests"]
+          },
+          "gpt-5.4": {
+            "tier": "balanced",
+            "best_for": ["standard_features", "api_endpoints", "moderate_logic", "most_tests"]
+          }
+        }
+      },
+      "anthropic": {
+        "models": {
+          "haiku": {
+            "tier": "fast",
+            "best_for": ["boilerplate", "config", "simple_tests"]
+          },
+          "sonnet": {
+            "tier": "balanced",
+            "best_for": ["standard_features", "api_endpoints", "moderate_logic"]
+          },
+          "opus": {
+            "tier": "deep",
+            "best_for": ["complex_logic", "research", "security_review"]
+          }
+        }
+      }
+    }
   },
   "discovery": {
     "max_interview_rounds": 5,
@@ -35,6 +73,7 @@
   "estimation": {
     "default_buffer_percent": 20,
     "default_risk_level": "medium",
+    "default_provider": "openai",
     "include_cost_breakdown": true,
     "include_timeline_scenarios": true,
     "calibration_file": "retro/estimation-calibration.json",
@@ -45,11 +84,11 @@
       "very_low": 1.00
     },
     "model_defaults": {
-      "trivial": "haiku",
-      "simple": "sonnet",
-      "medium": "sonnet",
-      "complex": "opus",
-      "research": "opus"
+      "trivial": "fast",
+      "simple": "balanced",
+      "medium": "balanced",
+      "complex": "deep",
+      "research": "deep"
     }
   },
   "plan": {
@@ -66,21 +105,55 @@
     "traceability_check_enabled": true,
     "require_100pct_p1_coverage": true,
     "pbi_max_acs_before_split_warning": 8,
-    "output_format": "markdown"
+    "output_format": "markdown",
+    "structured_release_plan_file": "state/release-plan.json"
   },
   "execution": {
+    "mode": "hybrid",
+    "mode_options": ["manual", "hybrid", "auto"],
     "stages": ["think", "plan", "build", "review", "test", "ship"],
     "approval_gates": {
-      "sprint_start": "required",
-      "build_to_review": "auto",
-      "review_to_test": "auto",
-      "test_to_ship": "optional",
-      "sprint_complete": "required"
+      "manual": {
+        "sprint_start": "required",
+        "build_to_review": "required",
+        "review_to_test": "required",
+        "test_to_ship": "required",
+        "sprint_complete": "required"
+      },
+      "hybrid": {
+        "sprint_start": "required",
+        "build_to_review": "auto",
+        "review_to_test": "auto",
+        "test_to_ship": "optional",
+        "sprint_complete": "required"
+      },
+      "auto": {
+        "sprint_start": "auto",
+        "build_to_review": "auto",
+        "review_to_test": "auto",
+        "test_to_ship": "auto",
+        "sprint_complete": "optional"
+      }
     },
     "fix_first_review": true,
     "parallel_execution_enabled": true,
     "max_parallel_work_items": 3,
-    "progress_tracking_enabled": true
+    "progress_tracking_enabled": true,
+    "telemetry": {
+      "required": true,
+      "file": "state/execution-log.json",
+      "capture": [
+        "provider",
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "cached_tokens",
+        "tool_calls",
+        "wall_time_minutes",
+        "iteration_count",
+        "test_runs"
+      ]
+    }
   },
   "retro": {
     "compare_dimensions": ["tokens", "cost", "time", "iterations", "model_accuracy"],
