@@ -9,6 +9,8 @@ Generate the full suite of project documents. This phase reads previous outputs 
 
 ## Prerequisites
 
+> **Spec Execution Phase.** This phase runs automatically from the spec. It reads all upstream state files and generates planning artifacts. If upstream files are missing, run in degraded mode with DONE_WITH_CONCERNS rather than blocking.
+
 Read from the project workspace:
 - `state/discovery-report.json`
 - `state/project-scope.json`

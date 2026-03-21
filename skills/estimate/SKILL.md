@@ -9,6 +9,8 @@ Traditional estimation asks "how many dev hours?" AI-native estimation asks "how
 
 ## Prerequisites
 
+> **Spec Execution Phase.** This phase runs automatically from the spec. It reads architecture and scope outputs and produces estimates without human intervention. If pricing data is unavailable, mark as NEEDS_CONTEXT rather than blocking.
+
 Read from the project workspace:
 - `state/project-scope.json` — requirements and scope
 - `state/architecture.json` — components, APIs, data model

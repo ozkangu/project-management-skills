@@ -7,6 +7,8 @@ description: "Phase 6 of Project Builder. Retrospective and estimation calibrati
 
 Learn from what happened. This phase compares estimates against actuals, identifies patterns, and produces calibration data that improves future estimates.
 
+> **Spec Execution Phase.** This phase runs automatically after execution completes. It compares estimates against actuals and produces calibration data for future projects.
+
 ## Prerequisites
 
 Read from the project workspace:

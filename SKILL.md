@@ -24,15 +24,28 @@ Input: Idea / Repo URL / Web App / Document / Free Text
 
 Each phase builds on the previous one. You can run the full pipeline or any individual phase.
 
-## Execution Styles
+## Spec-Driven Model
 
-Project Builder supports three execution styles:
+Project Builder operates across a **spec boundary** that separates two zones:
 
-| Style | What it means |
+| Zone | Phases | How it works |
+|---|---|---|
+| **Spec Creation** | Discover → Scope → Architect | Agent collaborates with human to produce the spec. Human input is for content decisions — answering questions, making scope choices, confirming architecture — not gate approval. |
+| **Spec Execution** | Estimate → Plan → Execute → Retro | Agent runs autonomously from the spec. No human intervention needed. The spec is the authority. |
+
+The spec boundary is after Phase 2 (Architect). Once `state/architecture.json` is written with status DONE, everything after it auto-executes.
+
+### Execution Mode Override
+
+For Spec Creation phases, some users want more control. Three modes are available as a secondary option:
+
+| Mode | What it means |
 |---|---|
-| `manual` | Human approval at every major gate. Best for collaborative planning and controlled delivery. |
-| `hybrid` | Default. Human approval at sprint boundaries, auto-progress inside a sprint unless blocked. |
-| `auto` | End-to-end execution with intervention only for blockers, missing context, or explicit approval requirements. |
+| `auto` | Default. Advance automatically when status is DONE. |
+| `hybrid` | Pause at phase boundaries during spec creation for explicit confirmation. |
+| `manual` | Pause at every major gate during spec creation. |
+
+Post-spec-boundary, execution is always autonomous regardless of mode setting.
 
 Read `config/pipeline-config.json` before starting and honor `execution.mode` plus provider settings.
 
@@ -143,11 +156,13 @@ Every phase ends with one of these statuses:
 | `BLOCKED` | Cannot complete without resolution | Show blockers, ask user |
 | `NEEDS_CONTEXT` | Missing information to proceed | Ask specific questions |
 
-Respect `execution.mode` when deciding whether to wait for confirmation before advancing.
+**During Spec Creation (phases 0-2):** Present a summary when DONE, then advance. Only stop on BLOCKED or NEEDS_CONTEXT.
+
+**After spec boundary (phases 3-6):** Auto-advance always. No "Ready to proceed?" prompts. The spec is the authority.
 
 ## Configuration
 
-Default config lives in `config/pipeline-config.json` in this skill's directory. Read it to understand defaults for provider selection, approval gates, estimation parameters, execution modes, telemetry capture, and output formats. Users can override any setting.
+Default config lives in `config/pipeline-config.json` in this skill's directory. Read it to understand defaults for provider selection, approval gates, estimation parameters, execution modes, telemetry capture, and output formats. Users can override any setting. Note that `auto_advance` applies post-spec-boundary by default.
 
 ## Installation
 

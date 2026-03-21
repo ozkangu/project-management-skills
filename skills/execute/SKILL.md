@@ -7,6 +7,8 @@ description: "Phase 5 of Project Builder. Sprint orchestration and delivery exec
 
 Turn plans into delivered software. This phase orchestrates the actual build process, running work items through a structured delivery pipeline with quality gates.
 
+> **Spec Execution Phase.** This phase executes work items autonomously from the spec. The release plan, architecture, and estimates are the authority. The agent proceeds through all work items without waiting for human approval.
+
 ## Prerequisites
 
 Read from the project workspace:
@@ -21,10 +23,11 @@ Treat `state/release-plan.json` as the machine-readable source of truth. `docs/r
 
 ## Execution Modes
 
-Honor `execution.mode` from config or project meta:
-- `manual`: require approval at every major gate
-- `hybrid`: require approval at sprint boundaries, auto-progress within a sprint unless blocked
-- `auto`: proceed end-to-end unless blocked, missing context, or a safety-critical decision requires intervention
+Honor `execution.mode` from config or project meta. Default is `auto`:
+
+- `auto` **(default)**: proceed end-to-end unless blocked, missing context, or a safety-critical decision requires intervention. This is the standard mode for spec-driven execution.
+- `hybrid`: require approval at sprint boundaries, auto-progress within a sprint unless blocked. Use when a user explicitly wants sprint-level checkpoints.
+- `manual`: require approval at every major gate. Use when a user explicitly needs fine-grained control over each step.
 
 ## Execution Model
 
@@ -189,14 +192,14 @@ After each work item completes, compute burn rates against the budget from `stat
 
 Update `summary.budget_burn_pct` in the execution log after every work item.
 
-**Budget warning:** If any burn dimension exceeds 80% while work items remain unfinished, flag a budget warning. Present the burn rate to the user:
-- In `manual` and `hybrid` modes: show the warning at the next approval gate
-- In `auto` mode: pause execution and request user decision on whether to continue, re-scope, or stop
+**Budget warning:** If any burn dimension exceeds 80% while work items remain unfinished, flag a budget warning:
+- In `auto` mode: warn but continue execution. Only pause if budget exceeds 100% overrun (200% of original budget).
+- In `manual` and `hybrid` modes: show the warning at the next approval gate.
 
 ## Handling Blockers
 
 When a work item is blocked:
 1. Identify the blocker
 2. Assess impact
-3. Present options unless in fully automatic mode and a safe reorder is obvious
-4. Wait for user decision when the blocker affects scope, architecture, security, cost controls, or external dependencies
+3. Auto-resolve where possible (reorder work items, use fallback approaches, skip non-critical items)
+4. Only escalate to human for true blockers: security concerns, scope changes, or external dependencies that cannot be resolved autonomously

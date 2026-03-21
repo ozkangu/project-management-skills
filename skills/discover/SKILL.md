@@ -210,7 +210,6 @@ Unknowns: {count} remaining
 Status: {DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT}
 
 Recommendation: {what to do next}
-Ready to proceed to Phase 1 (Scope)?
 ```
 
-Wait for user confirmation before proceeding.
+If status is DONE, advance to Phase 1 (Scope). If NEEDS_CONTEXT or BLOCKED, resolve before advancing.

@@ -242,7 +242,6 @@ Status: {DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED}
 {If NEEDS_CONTEXT: list what's needed}
 {If BLOCKED: list blockers}
 
-Ready to proceed to Phase 2 (Architecture)?
 ```
 
-Wait for user confirmation before proceeding.
+If status is DONE, advance to Phase 2 (Architecture). If NEEDS_CONTEXT or BLOCKED, resolve before advancing.

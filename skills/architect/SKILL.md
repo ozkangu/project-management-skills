@@ -296,6 +296,17 @@ Save to `state/architecture.json`:
 }
 ```
 
+## Spec Boundary
+
+This is the spec boundary. Once architecture is complete with status DONE, all subsequent phases (Estimate → Plan → Execute → Retro) execute automatically from the spec. No further human approval is needed unless an exception occurs (BLOCKED, NEEDS_CONTEXT, budget overrun).
+
+The spec consists of three artifacts:
+- `state/discovery-report.json` — what exists and what the problem is
+- `state/project-scope.json` — what to build and what not to build
+- `state/architecture.json` — how to build it
+
+Everything after this point is derived from these three files.
+
 ## Phase Completion
 
 ```
@@ -315,5 +326,5 @@ Open Decisions: {count}
 
 Status: {DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED}
 
-Ready to proceed to Phase 3 (Estimation)?
+Spec complete. Advancing to estimation.
 ```

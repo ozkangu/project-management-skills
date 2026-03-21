@@ -3,8 +3,9 @@
   "description": "Default configuration for the Project Builder pipeline. Users can override any setting.",
   "pipeline": {
     "phases": ["discover", "scope", "architect", "estimate", "plan", "execute", "retro"],
-    "auto_advance": false,
-    "require_confirmation_between_phases": true
+    "spec_boundary_phase": "architect",
+    "auto_advance": true,
+    "require_confirmation_between_phases": false
   },
   "providers": {
     "default_provider": "openai",
@@ -110,7 +111,7 @@
     "structured_release_plan_file": "state/release-plan.json"
   },
   "execution": {
-    "mode": "hybrid",
+    "mode": "auto",
     "mode_options": ["manual", "hybrid", "auto"],
     "stages": ["think", "plan", "build", "review", "test", "ship"],
     "approval_gates": {
@@ -133,7 +134,7 @@
         "build_to_review": "auto",
         "review_to_test": "auto",
         "test_to_ship": "auto",
-        "sprint_complete": "optional"
+        "sprint_complete": "auto"
       }
     },
     "fix_first_review": true,
