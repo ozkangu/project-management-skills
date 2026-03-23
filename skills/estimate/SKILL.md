@@ -20,7 +20,30 @@ Also read `references/estimation-benchmarks.json` from the project-builder skill
 
 If `retro/estimation-calibration.json` exists from a previous project, read it and apply the calibration factors.
 
-Also read `references/calibration-history.jsonl` from the skill directory if it exists. This file contains cross-project calibration data appended by the Retro phase. Compute running averages across all projects for `work_type_multipliers` and `provider_multipliers`. Use these running averages as a baseline. If a project-specific `estimation-calibration.json` is also available, its values override the cross-project averages for any overlapping keys.
+Also read `references/calibration-history.jsonl` from the skill directory if it exists. This file contains cross-project calibration data appended by the Retro phase.
+
+**Calibration Weighting Strategy:**
+
+When reading calibration history, apply time-based weighting to prioritize recent data:
+
+1. **Parse all JSONL entries** — Each line is a self-contained calibration record with a `date` field
+2. **Calculate age** — Days between calibration date and current date
+3. **Apply decay function** — If `calibration_weighting.enabled` in config:
+   - **Exponential decay**: `weight = max(min_weight, exp(-age / halflife))`
+   - **Linear decay**: `weight = max(min_weight, 1 - (age / max_age_days))`
+   - Use `decay_function` and `decay_halflife_days` from config
+4. **Filter by age** — Discard entries older than `max_age_days`
+5. **Compute weighted averages** — For each work type and provider tier:
+   - `weighted_mult = sum(mult * weight) / sum(weight)`
+   - Higher weight for recent projects, lower for old ones
+6. **Minimum sample requirement** — Require at least 3 data points per category before using weighted average
+
+**Fallback hierarchy:**
+1. Project-specific `estimation-calibration.json` (highest priority)
+2. Weighted average from `calibration-history.jsonl` (medium priority)
+3. Benchmarks from `estimation-benchmarks.json` (baseline)
+
+Use these running averages as a baseline. If a project-specific `estimation-calibration.json` is also available, its values override the cross-project averages for any overlapping keys.
 
 ## Provider and Model Selection
 

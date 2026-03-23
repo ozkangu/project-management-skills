@@ -3,8 +3,32 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 SKILL_NAME="project-management-skills"
+BACKUP_DIR=""
 
 echo "Installing $SKILL_NAME..."
+
+# --- Cleanup function for rollback on error ---
+cleanup_on_error() {
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "Installation failed with exit code $EXIT_CODE" >&2
+    if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
+      echo "Attempting to restore from backup..." >&2
+      if [ -f "$BACKUP_DIR/pipeline-config.json" ]; then
+        cp "$BACKUP_DIR/pipeline-config.json" "$SCRIPT_DIR/config/pipeline-config.json" 2>/dev/null || true
+        echo "  Restored config file" >&2
+      fi
+      if [ -L "$COMMANDS_DIR/$SKILL_NAME" ]; then
+        rm "$COMMANDS_DIR/$SKILL_NAME" 2>/dev/null || true
+        echo "  Removed incomplete symlink" >&2
+      fi
+      rm -rf "$BACKUP_DIR" 2>/dev/null || true
+    fi
+  fi
+}
+
+trap cleanup_on_error EXIT
 
 # --- Step 1: Validate required files ---
 echo ""
@@ -72,6 +96,12 @@ echo "  Symlinked $SCRIPT_DIR -> $LINK_TARGET"
 # --- Step 4: Provider configuration ---
 echo ""
 echo "Provider configuration:"
+
+# Create backup before modifying config
+BACKUP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/$SKILL_NAME.backup.XXXXXX")
+cp "$SCRIPT_DIR/config/pipeline-config.json" "$BACKUP_DIR/pipeline-config.json"
+echo "  Created config backup at $BACKUP_DIR"
+
 echo "  Current default provider: $(grep -o '"default_provider": *"[^"]*"' "$SCRIPT_DIR/config/pipeline-config.json" | head -1 | sed 's/.*: *"//' | sed 's/"//')"
 echo ""
 echo "  Available providers:"
@@ -89,14 +119,22 @@ fi
 
 case "$PROVIDER_CHOICE" in
   1)
-    sed -i.bak 's/"default_provider": *"[^"]*"/"default_provider": "openai"/' "$SCRIPT_DIR/config/pipeline-config.json"
-    rm -f "$SCRIPT_DIR/config/pipeline-config.json.bak"
-    echo "  Default provider set to: openai"
+    if sed -i.bak 's/"default_provider": *"[^"]*"/"default_provider": "openai"/' "$SCRIPT_DIR/config/pipeline-config.json" 2>/dev/null; then
+      rm -f "$SCRIPT_DIR/config/pipeline-config.json.bak"
+      echo "  Default provider set to: openai"
+    else
+      echo "  ERROR: Failed to update provider configuration" >&2
+      exit 1
+    fi
     ;;
   2)
-    sed -i.bak 's/"default_provider": *"[^"]*"/"default_provider": "anthropic"/' "$SCRIPT_DIR/config/pipeline-config.json"
-    rm -f "$SCRIPT_DIR/config/pipeline-config.json.bak"
-    echo "  Default provider set to: anthropic"
+    if sed -i.bak 's/"default_provider": *"[^"]*"/"default_provider": "anthropic"/' "$SCRIPT_DIR/config/pipeline-config.json" 2>/dev/null; then
+      rm -f "$SCRIPT_DIR/config/pipeline-config.json.bak"
+      echo "  Default provider set to: anthropic"
+    else
+      echo "  ERROR: Failed to update provider configuration" >&2
+      exit 1
+    fi
     ;;
   *)
     echo "  Keeping current provider setting."
@@ -145,6 +183,12 @@ else
 fi
 
 chmod 755 "$SCRIPT_DIR/install.sh"
+
+# Clean up backup on success
+if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
+  rm -rf "$BACKUP_DIR"
+  echo "  Cleaned up backup directory"
+fi
 
 if [ "$VERIFY_OK" -eq 1 ]; then
   echo ""
