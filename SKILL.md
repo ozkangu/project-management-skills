@@ -145,6 +145,26 @@ State flows between phases via JSON files in `state/`. Each phase reads its pred
 }
 ```
 
+### State Validation Protocol
+
+Before executing any phase, validate that required upstream state files exist and are valid:
+
+| Phase | Required Files | Validation Checks |
+|---|---|---|
+| Discover | None | N/A — entry phase |
+| Scope | `discovery-report.json`, `project-meta.json` | Check status=DONE, has requirements_raw |
+| Architect | `project-scope.json`, `discovery-report.json` | Check status=DONE, has requirements with priorities |
+| Estimate | `architecture.json`, `project-scope.json` | Check status=DONE, has components and data_entities |
+| Plan | `estimate.json`, `architecture.json`, `project-scope.json` | Check status=DONE, has work_items with estimates |
+| Execute | `release-plan.json`, `estimate.json`, `architecture.json` | Check releases array exists, has work items |
+| Retro | `execution-log.json`, `estimate.json` | Check execution log has telemetry, matches estimate work items |
+
+**Handling Missing or Invalid State:**
+1. If required file is missing: Return status `NEEDS_CONTEXT` and list missing files
+2. If file exists but status ≠ DONE: Warn and ask user to confirm proceeding
+3. If file has structural errors: Return status `BLOCKED` with specific error message
+4. Never invent or skip validation — data integrity is critical for cross-phase handoffs
+
 ### Completion Protocol
 
 Every phase ends with one of these statuses:

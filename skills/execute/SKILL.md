@@ -82,12 +82,37 @@ Maintain `state/execution-log.json` throughout execution.
 There are three ways to capture telemetry data. Choose the best available:
 
 1. **Agent self-report** — The agent records its own estimates after completing each work item. This is the default strategy. Mark `telemetry_quality` as `"estimated"`.
+   - **How to implement**: After each work item SHIP stage, the agent estimates token usage based on conversation history length, output generated, and tool calls made
+   - **Accuracy**: Moderate (~70-85% accurate). Good enough for calibration trends but not for precise billing
+   - **When to use**: Always available as fallback. Use when no instrumentation exists
 
 2. **Environment instrumented** — A wrapper script or environment integration captures actual API usage (token counts, timing, cost) from the provider. Mark `telemetry_quality` as `"exact"`.
+   - **How to implement**:
+     - For OpenAI: Use completion API response headers (`x-request-id`, usage object)
+     - For Anthropic: Parse response metadata (usage.input_tokens, usage.output_tokens)
+     - Store provider response metadata alongside execution log entries
+   - **Accuracy**: High (95-100% accurate). Matches provider billing
+   - **When to use**: Preferred method when technically feasible
 
 3. **Post-hoc from billing** — Download usage data from the provider dashboard after execution completes and backfill the execution log. Mark `telemetry_quality` as `"exact"` if provider data is granular enough to map to individual work items, otherwise `"estimated"`.
+   - **How to implement**:
+     - After sprint completion, export provider billing data
+     - Match timestamps and request IDs to work items
+     - Update execution-log.json with actual values
+   - **Accuracy**: Exact for total cost, estimated for per-item breakdown
+   - **When to use**: Post-sprint calibration, audit trails, cost reconciliation
 
 If no telemetry is available at all, mark `telemetry_quality` as `"missing"` and record qualitative notes about what happened.
+
+### Telemetry Quality Impact on Downstream Phases
+
+| Quality Level | Retro Analysis | Calibration Output | Cross-Project Learning |
+|---|---|---|---|
+| `exact` | Full quantitative comparison | Precise multipliers | High confidence baseline |
+| `estimated` | Directional insights with caveats | Trend-based adjustments | Medium confidence baseline |
+| `missing` | Qualitative only | Skip calibration | No contribution |
+
+**Critical**: Never claim `exact` quality unless you have provider-confirmed data. Overstating telemetry quality corrupts the calibration system.
 
 ### Required Telemetry Fields
 

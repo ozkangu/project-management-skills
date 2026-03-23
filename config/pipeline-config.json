@@ -79,6 +79,13 @@
     "include_timeline_scenarios": true,
     "calibration_file": "retro/estimation-calibration.json",
     "calibration_history_file": "references/calibration-history.jsonl",
+    "calibration_weighting": {
+      "enabled": true,
+      "max_age_days": 365,
+      "decay_function": "exponential",
+      "decay_halflife_days": 90,
+      "min_weight": 0.1
+    },
     "confidence_thresholds": {
       "high": 0.15,
       "medium": 0.30,
@@ -113,6 +120,11 @@
   "execution": {
     "mode": "auto",
     "mode_options": ["manual", "hybrid", "auto"],
+    "mode_validation": {
+      "enforce_consistency": true,
+      "allow_override": true,
+      "warn_on_mismatch": true
+    },
     "stages": ["think", "plan", "build", "review", "test", "ship"],
     "approval_gates": {
       "manual": {
@@ -141,6 +153,12 @@
     "parallel_execution_enabled": true,
     "max_parallel_work_items": 3,
     "progress_tracking_enabled": true,
+    "budget_burn_warning": {
+      "enabled": true,
+      "warning_threshold_pct": 80,
+      "critical_threshold_pct": 100,
+      "check_frequency": "per_work_item"
+    },
     "telemetry": {
       "required": true,
       "file": "state/execution-log.json",
