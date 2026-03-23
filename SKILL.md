@@ -161,7 +161,9 @@ Before executing any phase, validate that required upstream state files exist an
 
 **Handling Missing or Invalid State:**
 1. If required file is missing: Return status `NEEDS_CONTEXT` and list missing files
-2. If file exists but status ≠ DONE: Warn and ask user to confirm proceeding
+2. If file exists but status ≠ DONE:
+   - For phases 0–2 (pre-spec): Warn and ask user to confirm proceeding or revisiting the upstream phase.
+   - For phases 3–6 (post-spec): Do not prompt. Either (a) proceed while surfacing concerns via `DONE_WITH_CONCERNS` and clearly logging upstream status issues, or (b) if proceeding would be unsafe, return `BLOCKED` or `NEEDS_CONTEXT` with an explicit explanation.
 3. If file has structural errors: Return status `BLOCKED` with specific error message
 4. Never invent or skip validation — data integrity is critical for cross-phase handoffs
 
